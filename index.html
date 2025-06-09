@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>アーティア武器 復元強化シミュレーター</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 640px;
+      margin: auto;
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .weapon-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .weapon-btn {
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 0;
+      background: none;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    .weapon-btn img {
+      width: 100%;
+      max-width: 80px;
+      height: auto;
+      border-radius: 4px;
+    }
+    .weapon-btn.selected {
+      border: 3px solid #4CAF50;
+      background-color: rgba(76, 175, 80, 0.2);
+      box-shadow: 0 0 10px #4CAF50;
+      transform: scale(1.05);
+    }
+    #randomBtn {
+      width: 100%;
+      padding: 16px;
+      font-size: 20px;
+      margin: 20px 0;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #randomBtn:hover {
+      background-color: #45a049;
+    }
+    #bonusResult img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+      padding: 0;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>アーティア武器<br>復元強化シミュレーター</h1>
+
+  <div class="weapon-grid" id="weaponGrid"></div>
+
+  <button id="randomBtn">ランダム生成</button>
+
+  <div class="bonus-list" id="bonusResult"></div>
+
+  <script>
+    const maxTotal = 5;
+
+    const weaponList = [
+      "大剣", "太刀", "片手剣", "双剣", "ハンマー", "狩猟笛", "ランス",
+      "ガンランス", "スラッシュアックス", "チャージアックス", "操虫棍",
+      "弓", "ライトボウガン", "ヘビィボウガン"
+    ];
+
+    const bonusTypes = [
+      { name: "基礎攻撃力強化", max: 5, image: "基礎攻撃力強化.png" },
+      { name: "会心率強化", max: 2, image: "会心率強化.png" },
+      { name: "属性強化", max: 3, image: "属性強化.png" },
+      { name: "斬れ味強化", max: 2, image: "斬れ味強化.png" },
+      { name: "装填数強化", max: 2, image: "装填数強化.png" }
+    ];
+
+    const weaponData = {
+      "大剣": { sharpness: true, load: false },
+      "太刀": { sharpness: true, load: false },
+      "片手剣": { sharpness: true, load: false },
+      "双剣": { sharpness: true, load: false },
+      "ハンマー": { sharpness: true, load: false },
+      "狩猟笛": { sharpness: true, load: false },
+      "ランス": { sharpness: true, load: false },
+      "ガンランス": { sharpness: true, load: false },
+      "スラッシュアックス": { sharpness: true, load: false },
+      "チャージアックス": { sharpness: true, load: false },
+      "操虫棍": { sharpness: true, load: false },
+      "弓": { sharpness: false, load: false },
+      "ライトボウガン": { sharpness: false, load: true },
+      "ヘビィボウガン": { sharpness: false, load: true }
+    };
+
+    let selectedWeapon = "大剣";
+
+    const grid = document.getElementById("weaponGrid");
+    weaponList.forEach(weapon => {
+      const btn = document.createElement("button");
+      btn.className = "weapon-btn" + (weapon === selectedWeapon ? " selected" : "");
+      const img = document.createElement("img");
+      img.src = "images/" + weapon + ".png";
+      img.alt = weapon;
+      btn.appendChild(img);
+      btn.onclick = () => {
+        selectedWeapon = weapon;
+        document.querySelectorAll(".weapon-btn").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        document.getElementById("bonusResult").innerHTML = "";
+      };
+      grid.appendChild(btn);
+    });
+
+    document.getElementById("randomBtn").onclick = () => {
+      const data = weaponData[selectedWeapon];
+      const limits = bonusTypes.map(b => {
+        if (b.name === "斬れ味強化" && !data.sharpness) return 0;
+        if (b.name === "装填数強化" && !data.load) return 0;
+        return b.max;
+      });
+
+      const resultList = [];
+      const count = Array(bonusTypes.length).fill(0);
+      let remaining = maxTotal;
+
+      while (remaining > 0) {
+        const idx = Math.floor(Math.random() * bonusTypes.length);
+        if (limits[idx] === 0) continue;
+        if (count[idx] < limits[idx]) {
+          count[idx]++;
+          resultList.push(bonusTypes[idx].image);
+          remaining--;
+        }
+      }
+
+      displayBonus(resultList);
+    };
+
+    function displayBonus(list) {
+      const area = document.getElementById("bonusResult");
+      area.innerHTML = "";
+      list.forEach(imgFile => {
+        const img = document.createElement("img");
+        img.src = "images/" + imgFile;
+        img.alt = imgFile;
+        area.appendChild(img);
+      });
+    }
+  </script>
+</body>
+</html>
