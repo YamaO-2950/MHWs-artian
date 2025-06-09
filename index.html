@@ -10,6 +10,7 @@
       max-width: 640px;
       margin: auto;
       text-align: center;
+      background-color: #f0f0f0;
     }
     h1 {
       font-size: 24px;
@@ -45,7 +46,7 @@
       width: 100%;
       padding: 16px;
       font-size: 20px;
-      margin: 20px 0;
+      margin: 20px 0 10px;
       background-color: #4CAF50;
       color: white;
       border: none;
@@ -55,13 +56,39 @@
     #randomBtn:hover {
       background-color: #45a049;
     }
-    #bonusResult img {
+    .bonus-list img {
       display: block;
       width: 100%;
       height: auto;
-      margin: 0;
+      margin: 0 auto;
       padding: 0;
+    }
+    #material-display {
+      margin-top: 20px;
+      background-color: #ddd;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: left;
+      font-size: 18px;
+    }
+    #material-display div {
+      margin-bottom: 8px;
+    }
+    #counter-display {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+    #reset-counter {
+      padding: 8px 16px;
+      font-size: 16px;
+      background-color: #ccc;
       border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 30px;
+    }
+    #reset-counter:hover {
+      background-color: #bbb;
     }
   </style>
 </head>
@@ -74,14 +101,52 @@
 
   <div class="bonus-list" id="bonusResult"></div>
 
+  <div id="counter-display">試行回数: 0</div>
+  <button id="reset-counter">カウントリセット</button>
+
+  <div id="material-display"></div>
+
   <script>
     const maxTotal = 5;
+    let generateCount = 0;
+    let selectedWeapon = "大剣";
 
     const weaponList = [
       "大剣", "太刀", "片手剣", "双剣", "ハンマー", "狩猟笛", "ランス",
       "ガンランス", "スラッシュアックス", "チャージアックス", "操虫棍",
       "弓", "ライトボウガン", "ヘビィボウガン"
     ];
+
+    const weaponData = {
+      "大剣": { sharpness: true, load: false, parts: ["刃", "刃", "筒"] },
+      "太刀": { sharpness: true, load: false, parts: ["刃", "筒", "筒"] },
+      "片手剣": { sharpness: true, load: false, parts: ["刃", "筒", "盤"] },
+      "双剣": { sharpness: true, load: false, parts: ["刃", "刃", "盤"] },
+      "ハンマー": { sharpness: true, load: false, parts: ["盤", "盤", "筒"] },
+      "狩猟笛": { sharpness: true, load: false, parts: ["盤", "装置", "装置"] },
+      "ランス": { sharpness: true, load: false, parts: ["刃", "盤", "盤"] },
+      "ガンランス": { sharpness: true, load: false, parts: ["盤", "盤", "装置"] },
+      "スラッシュアックス": { sharpness: true, load: false, parts: ["刃", "刃", "装置"] },
+      "チャージアックス": { sharpness: true, load: false, parts: ["刃", "盤", "装置"] },
+      "操虫棍": { sharpness: true, load: false, parts: ["刃", "筒", "装置"] },
+      "弓": { sharpness: false, load: false, parts: ["筒", "筒", "装置"] },
+      "ライトボウガン": { sharpness: false, load: true, parts: ["筒", "装置", "装置"] },
+      "ヘビィボウガン": { sharpness: false, load: true, parts: ["盤", "筒", "装置"] }
+    };
+
+    const materialNames = {
+      "刃": "砕かれた古刃",
+      "筒": "潰された古筒",
+      "盤": "ひび割れた古盤",
+      "装置": "錆びついた古装置"
+    };
+
+    const materialImages = {
+      "刃": "images/砕かれた古刃.png",
+      "筒": "images/潰された古筒.png",
+      "盤": "images/ひび割れた古盤.png",
+      "装置": "images/錆びついた古装置.png"
+    };
 
     const bonusTypes = [
       { name: "基礎攻撃力強化", max: 5, image: "基礎攻撃力強化.png" },
@@ -90,25 +155,6 @@
       { name: "斬れ味強化", max: 2, image: "斬れ味強化.png" },
       { name: "装填数強化", max: 2, image: "装填数強化.png" }
     ];
-
-    const weaponData = {
-      "大剣": { sharpness: true, load: false },
-      "太刀": { sharpness: true, load: false },
-      "片手剣": { sharpness: true, load: false },
-      "双剣": { sharpness: true, load: false },
-      "ハンマー": { sharpness: true, load: false },
-      "狩猟笛": { sharpness: true, load: false },
-      "ランス": { sharpness: true, load: false },
-      "ガンランス": { sharpness: true, load: false },
-      "スラッシュアックス": { sharpness: true, load: false },
-      "チャージアックス": { sharpness: true, load: false },
-      "操虫棍": { sharpness: true, load: false },
-      "弓": { sharpness: false, load: false },
-      "ライトボウガン": { sharpness: false, load: true },
-      "ヘビィボウガン": { sharpness: false, load: true }
-    };
-
-    let selectedWeapon = "大剣";
 
     const grid = document.getElementById("weaponGrid");
     weaponList.forEach(weapon => {
@@ -123,6 +169,9 @@
         document.querySelectorAll(".weapon-btn").forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
         document.getElementById("bonusResult").innerHTML = "";
+        generateCount = 0;
+        updateCounter();
+        updateMaterialDisplay();
       };
       grid.appendChild(btn);
     });
@@ -149,8 +198,21 @@
         }
       }
 
+      generateCount++;
+      updateCounter();
       displayBonus(resultList);
+      updateMaterialDisplay();
     };
+
+    document.getElementById("reset-counter").onclick = () => {
+      generateCount = 0;
+      updateCounter();
+      document.getElementById("material-display").innerHTML = "";
+    };
+
+    function updateCounter() {
+      document.getElementById("counter-display").textContent = `試行回数: ${generateCount}`;
+    }
 
     function displayBonus(list) {
       const area = document.getElementById("bonusResult");
@@ -162,6 +224,38 @@
         area.appendChild(img);
       });
     }
+
+    function updateMaterialDisplay() {
+      const data = weaponData[selectedWeapon];
+      const materialCount = { "刃": 0, "筒": 0, "盤": 0, "装置": 0 };
+      data.parts.forEach(p => materialCount[p]++);
+      const area = document.getElementById("material-display");
+      area.innerHTML = "";
+
+      for (let key in materialCount) {
+        if (materialCount[key] > 0) {
+          const div = document.createElement("div");
+          const img = document.createElement("img");
+          img.src = materialImages[key];
+          img.alt = materialNames[key];
+          img.style.width = "24px";
+          img.style.verticalAlign = "middle";
+          img.style.marginRight = "8px";
+          div.appendChild(img);
+          div.append(`${materialNames[key]} ×${materialCount[key] * generateCount}`);
+          area.appendChild(div);
+        }
+      }
+
+      const totalCost = 20000 * generateCount;
+      const costDiv = document.createElement("div");
+      costDiv.textContent = `合計金額: ${totalCost.toLocaleString()}z`;
+      costDiv.style.marginTop = "10px";
+      area.appendChild(costDiv);
+    }
+
+    // 初期表示更新
+    updateMaterialDisplay();
   </script>
 </body>
 </html>
