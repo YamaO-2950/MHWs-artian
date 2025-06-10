@@ -52,6 +52,7 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      line-height: 1.4;
     }
     #randomBtn:hover {
       background-color: #45a049;
@@ -74,10 +75,6 @@
     #material-display div {
       margin-bottom: 8px;
     }
-    #counter-display {
-      margin: 10px 0;
-      font-size: 18px;
-    }
     #reset-counter {
       padding: 8px 16px;
       font-size: 16px;
@@ -85,7 +82,7 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      margin-bottom: 30px;
+      margin-top: 30px;
     }
     #reset-counter:hover {
       background-color: #bbb;
@@ -97,14 +94,13 @@
 
   <div class="weapon-grid" id="weaponGrid"></div>
 
-  <button id="randomBtn">ランダム生成</button>
+  <button id="randomBtn">復元強化<br><small>1回目</small></button>
 
   <div class="bonus-list" id="bonusResult"></div>
 
-  <div id="counter-display">試行回数: 0</div>
-  <button id="reset-counter">カウントリセット</button>
-
   <div id="material-display"></div>
+
+  <button id="reset-counter">リセット</button>
 
   <script>
     const maxTotal = 5;
@@ -168,15 +164,24 @@
         selectedWeapon = weapon;
         document.querySelectorAll(".weapon-btn").forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
-        document.getElementById("bonusResult").innerHTML = "";
         generateCount = 0;
-        updateCounter();
-        updateMaterialDisplay();
+        performRandomGeneration(); // 初回生成
       };
       grid.appendChild(btn);
     });
 
     document.getElementById("randomBtn").onclick = () => {
+      performRandomGeneration();
+    };
+
+    document.getElementById("reset-counter").onclick = () => {
+      generateCount = 0;
+      updateRandomBtnLabel();
+      document.getElementById("bonusResult").innerHTML = "";
+      document.getElementById("material-display").innerHTML = "";
+    };
+
+    function performRandomGeneration() {
       const data = weaponData[selectedWeapon];
       const limits = bonusTypes.map(b => {
         if (b.name === "斬れ味強化" && !data.sharpness) return 0;
@@ -199,19 +204,13 @@
       }
 
       generateCount++;
-      updateCounter();
+      updateRandomBtnLabel();
       displayBonus(resultList);
       updateMaterialDisplay();
-    };
+    }
 
-    document.getElementById("reset-counter").onclick = () => {
-      generateCount = 0;
-      updateCounter();
-      document.getElementById("material-display").innerHTML = "";
-    };
-
-    function updateCounter() {
-      document.getElementById("counter-display").textContent = `試行回数: ${generateCount}`;
+    function updateRandomBtnLabel() {
+      document.getElementById("randomBtn").innerHTML = `復元強化<br><small>${generateCount}回目</small>`;
     }
 
     function displayBonus(list) {
@@ -254,8 +253,8 @@
       area.appendChild(costDiv);
     }
 
-    // 初期表示更新
-    updateMaterialDisplay();
+    // 初期表示
+    performRandomGeneration();
   </script>
 </body>
 </html>
